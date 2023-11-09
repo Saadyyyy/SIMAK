@@ -19,5 +19,6 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 
 	e.POST("/signup", controller.Signup(db, secretKey))              // Register
 	e.POST("/signin", controller.SignIn(db, secretKey))              //Login
-	e.POST("/create-mk", controller.CreateMataKuliah(db, secretKey)) // create matakuliah
+	e.POST("/create-mk", controller.CreateMataKuliah(db, secretKey)) // create matakuliah admin
+	e.DELETE("/mk/:id", controller.DeleteMk(db, secretKey))          //menghapus mk admin
 }
