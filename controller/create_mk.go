@@ -31,14 +31,7 @@ func CreateMataKuliah(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 				"massage": "Invalid token",
 			})
 		}
-
 		var person models.Person
-		if person.IsAdmin != person.IsAdmin {
-			return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-				"Error":   true,
-				"massage": "Only admin can use this end point",
-			})
-		}
 
 		result := db.Where("nim = ?", nim).First(&person)
 		if result.Error != nil {
@@ -46,37 +39,54 @@ func CreateMataKuliah(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 				"massage": "Failed to fetch nim",
 			})
 		}
+		if !person.IsAdmin {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+				"Error":   true,
+				"massage": "Only admin can use this end point",
+			})
+		}
 
-		// newMatakuliah := models.MataKuliah{}
-
-		var mataKuliah struct {
+		var respon struct {
+			Code     string `json:"code"`
+			Sks      int    `json:"jumlah_sks"`
 			Mk       string `json:"mata_kuliah"`
 			Semester int16  `json:"semester"`
 			Dosen    string `json:"dosen"`
 		}
 
-		if err := c.Bind(&mataKuliah); err != nil {
-			return c.JSON(http.StatusBadRequest, map[string]interface{}{
-				"Eror": err.Error(),
+		if err := c.Bind(&respon); err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+				"Error":   true,
+				"Massage": err.Error(),
 			})
 		}
 
-		newMatakuliah := models.MataKuliah{
-			Mk:       mataKuliah.Mk,
-			Semester: mataKuliah.Semester,
-			Dosen:    mataKuliah.Dosen,
+		NewCreateMk := models.MataKuliah{
+			Code:     respon.Code,
+			Mk:       respon.Mk,
+			Sks:      respon.Sks,
+			Semester: respon.Semester,
+			Dosen:    respon.Dosen,
 		}
 
-		if err := db.Create(&newMatakuliah).Error; err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-				"Error": "Failed create matakuliah",
+		// if err := c.Bind(&NewCreateMk); err != nil {
+		// 	return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+		// 		"Error":   true,
+		// 		"Massage": "Invalid connect to database",
+		// 	})
+		// }
+
+		if err := db.Create(&NewCreateMk).Error; err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]interface{}{
+				"Error":   true,
+				"Massage": "Invalid create database",
 			})
 		}
 
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"Error":   false,
 			"massage": "successfully create mata kuliah",
-			"Data":    newMatakuliah,
+			"Data":    NewCreateMk,
 		})
 	}
 }
